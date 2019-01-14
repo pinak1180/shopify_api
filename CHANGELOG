@@ -1,3 +1,20 @@
+== Version 5.2.4
+
+* Added `currency` parameter to `ShopifyAPI::Order#capture`. This parameter is required for apps that belong to the
+multi-currency beta program.
+
+== Version 5.2.3
+
+* Update delivery confirmation resource to delivery confirmation details resource.
+
+== Version 5.2.2
+
+* Add delivery confirmation endpoint to Ping resources.
+
+== Version 5.2.1
+
+* Log warning when Shopify indicates deprecated API call was performed
+
 == Version 5.2.0
 
 * Added `ShopifyAPI::Currency` to fetch list of supported currencies on a shop
