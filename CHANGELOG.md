@@ -1,3 +1,18 @@
+== Version 7.0.1
+
+* Support passing version string to `ShopifyAPI::Base.api_version` [#563](https://github.com/Shopify/shopify_api/pull/563)
+
+== Version 7.0.0
+
+* Removed support for `ActiveResouce` < `4.1`.
+* Removed `ShopifyAPI::Oauth`.
+* Added api version support, See [migration
+notes](README.md#-breaking-change-notice-for-version-700-)
+* Changed `ShopifyAPI::Session` method signatures from positional to keyword
+arguments, See [migration notes](README.md#-breaking-change-notice-for-version-700-)
+* Add support for newer call limit header `X-Shopify-Shop-Api-Call-Limit`.
+* Removed all Ping resources.
+
 == Version 6.0.0
 
 * Removed undocumented `protocol` and `port` options from `ShopifyAPI::Session`.
