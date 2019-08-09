@@ -38,7 +38,7 @@ ShopifyAPI::Session.temp(domain: domain, token: token, api_version: api_version)
 end
 ```
 
-The `api_version` attribute can take the string or symbol name of any known version and correctly coerce it to a `ShopifyAPI::ApiVersion`.  You can find the currently defined versions [here](https://github.com/Shopify/shopify_api/blob/master/lib/shopify_api/defined_versions.rb), follow these [instructions](#adding-aditional-api-versions) to add additional version definitions if needed.
+The `api_version` attribute can take the string or symbol name of any known version and correctly coerce it to a `ShopifyAPI::ApiVersion`.  You can find the currently defined versions [here](https://github.com/Shopify/shopify_api/blob/master/lib/shopify_api/defined_versions.rb), follow these [instructions](#adding-additional-api-versions) to add additional version definitions if needed.
 
 For example if you want to use the `2019-04` version you would create a session like this:
 ```ruby
@@ -105,7 +105,7 @@ For more information and detailed documentation about the API visit https://deve
 
 #### Ruby version
 
-This gem requires Ruby 2.3.1 as of version 4.3. If you need to use an older Ruby version then update your `Gemfile` to lock onto an older release than 4.3.
+This gem requires Ruby 2.4 as of version 7.0.
 
 ### Installation
 
@@ -290,20 +290,20 @@ ShopifyAPI uses ActiveResource to communicate with the REST web service. ActiveR
 
 ### Console
 
-This package also supports the ``shopify-cli`` executable to make it easy to open up an interactive console to use the API with a shop.
+This package also supports the ``shopify-api`` executable to make it easy to open up an interactive console to use the API with a shop.
 
-1. Install the ``shopify_cli`` gem.
+1. Install the ``shopify_api_console`` gem.
 
 ```bash
-gem install shopify_cli
+gem install shopify_api_console
 ```
 
 2. Obtain a private API key and password to use with your shop (step 2 in "Getting Started")
 
-3. Use the ``shopify-cli`` script to save the credentials for the shop to quickly log in.
+3. Use the ``shopify-api`` script to save the credentials for the shop to quickly log in.
 
    ```bash
-   shopify-cli add yourshopname
+   shopify-api add yourshopname
    ```
 
    Follow the prompts for the shop domain, API key and password.
@@ -311,13 +311,13 @@ gem install shopify_cli
 4. Start the console for the connection.
 
    ```bash
-   shopify-cli console
+   shopify-api console
    ```
 
 5. To see the full list of commands, type:
 
    ```bash
-   shopify-cli help
+   shopify-api help
    ```
 
 ## GraphQL
@@ -350,7 +350,7 @@ We will release a gem update every time we release a new version of the API. Mos
 If you want access to a newer version without upgrading you can define an api version.
 For example if you wanted to add an `ApiVersion` '2022-03', you would add the following to the initialization of your application:
 ```ruby
-ShopifyAPI::ApiVersion.define_version(ShopifyAPI::ApiVersion::Release.new('2022-03')
+ShopifyAPI::ApiVersion.define_version(ShopifyAPI::ApiVersion::Release.new('2022-03'))
 ```
 Once you have done that you can now set this version in a Sesssion like this:
 
@@ -364,6 +364,36 @@ ShopifyAPI::Session.new(domain: domain, token: token, api_version: '2022-03')
 ActiveResource is threadsafe as of version 4.1 (which works with Rails 4.x and above).
 
 If you were previously using Shopify's [activeresource fork](https://github.com/shopify/activeresource) then you should remove it and use ActiveResource 4.1.
+
+## Pagination
+
+Pagination can occur in one of two ways.
+
+Page based pagination
+```ruby
+page = 1
+products = ShopifyAPI::Product.find(:all, params: { limit: 50, page: page })
+process_products(products)
+while(products.count == 50)
+  page += 1
+  products = ShopifyAPI::Product.find(:all, params: { limit: 50, page: page })
+  process_products(products)
+end
+```
+
+Page based pagination will be deprecated in the `2019-10` API version, in favor of the second method of pagination:
+
+[Relative cursor based pagination](https://help.shopify.com/en/api/guides/paginated-rest-results)
+```ruby
+products = ShopifyAPI::Product.find(:all, params: { limit: 50 })
+process_products(products)
+while products.next_page?
+  products = products.fetch_next_page
+  process_products(products)
+end
+```
+
+Relative cursor pagination is currently available for all endpoints using the `unstable` API version.
 
 ## Using Development Version
 
