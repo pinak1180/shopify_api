@@ -10,6 +10,33 @@ The Shopify API gem allows Ruby developers to programmatically access the admin 
 
 The API is implemented as JSON over HTTP using all four verbs (GET/POST/PUT/DELETE). Each resource, like Order, Product, or Collection, has its own URL and is manipulated in isolation. In other words, we’ve tried to make the API follow the REST principles as much as possible.
 
+### !! Breaking change notice for version 8.0.0 !!
+
+ApiVersion was introduced in Version 7.0.0 and known versions were hard coded into the gem. Manually defining api versions is no longer required for versions not listed in the gem. Version 8.0.0 removes the following:
+* `ShopifyAPI::ApiVersion::Unstable`
+* `ShopifyAPI::ApiVersion::Release`
+* `ShopifyAPI::ApiVersion.define_version`
+
+The following methods on `ApiVersion` have been deprecated:
+- `.coerce_to_version` deprecated. use `.find_version`
+- `.define_known_versions` deprecated. Use `.fetch_known_versions`
+- `.clear_defined_versions` deprecated. Use. `.clear_known_versions`
+- `.latest_stable_version` deprecated. Use `ShopifyAPI::Meta.admin_versions.find(&:latest_supported)` (this fetches info from Shopify servers. No authentication required.)
+- `#name` deprecated. Use `#handle`
+- `#stable?` deprecated. Use `#supported?`
+
+Version 8.0.0 introduces a _version lookup mode_. By default, `ShopifyAPI::ApiVersion.version_lookup_mode` is `:define_on_unknown`. When setting the api_version on `Session` or `Base`, the `api_version` attribute takes a version handle (ie `'2019-07'` or `:unstable`) and sets an instance of `ShopifyAPI::ApiVersion` matching the handle. When the version_lookup_mode is set to `:define_on_unknown`, any handle will naïvely create a new `ApiVersion` if the version is not in the known versions returned by `ShopifyAPI::ApiVersion.versions`.
+
+To ensure only known and active versions can be set, call
+
+```ruby
+ShopifyAPI::ApiVersion.version_lookup_mode = :raise_on_unknown
+ShopifyAPI::ApiVersion.fetch_known_versions
+```
+
+Known and active versions are fetched from https://app.shopify.com/services/apis.json and cached. Trying to use a version outside this cached set will raise an error. To switch back to naïve lookup and create a version if its not found, call `ShopifyAPI::ApiVersion.version_lookup_mode = :define_on_unknown`.
+
+
 ## !! Breaking change notice for version 7.0.0 !!
 
 ### Changes to ShopifyAPI::Session
@@ -37,8 +64,6 @@ ShopifyAPI::Session.temp(domain: domain, token: token, api_version: api_version)
   ...
 end
 ```
-
-The `api_version` attribute can take the string or symbol name of any known version and correctly coerce it to a `ShopifyAPI::ApiVersion`.  You can find the currently defined versions [here](https://github.com/Shopify/shopify_api/blob/master/lib/shopify_api/defined_versions.rb), follow these [instructions](#adding-additional-api-versions) to add additional version definitions if needed.
 
 For example if you want to use the `2019-04` version you would create a session like this:
 ```ruby
@@ -344,21 +369,6 @@ result = client.query(SHOP_NAME_QUERY)
 result.data.shop.name
 ```
 
-## Adding additional API versions
-We will release a gem update every time we release a new version of the API. Most of the time upgrading the gem will be all you need to do.
-
-If you want access to a newer version without upgrading you can define an api version.
-For example if you wanted to add an `ApiVersion` '2022-03', you would add the following to the initialization of your application:
-```ruby
-ShopifyAPI::ApiVersion.define_version(ShopifyAPI::ApiVersion::Release.new('2022-03'))
-```
-Once you have done that you can now set this version in a Sesssion like this:
-
-```ruby
-ShopifyAPI::Session.new(domain: domain, token: token, api_version: '2022-03')
-```
-
-
 ## Threadsafety
 
 ActiveResource is threadsafe as of version 4.1 (which works with Rails 4.x and above).
@@ -393,7 +403,7 @@ while products.next_page?
 end
 ```
 
-Relative cursor pagination is currently available for all endpoints using the `unstable` API version.
+Relative cursor pagination is currently available for all endpoints using the `2019-10` and later API versions.
 
 ## Using Development Version
 

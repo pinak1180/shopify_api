@@ -1,15 +1,14 @@
 $:.unshift File.dirname(__FILE__)
-
 require 'active_resource'
 require 'active_support/core_ext/class/attribute_accessors'
 require 'digest/md5'
 require 'base64'
 require 'active_resource/detailed_log_subscriber'
 require 'shopify_api/limits'
-require 'shopify_api/defined_versions'
 require 'shopify_api/api_version'
+require 'shopify_api/meta'
 require 'active_resource/json_errors'
-require 'active_resource/collection_ext'
+require 'shopify_api/paginated_collection'
 require 'shopify_api/disable_prefix_check'
 
 module ShopifyAPI
@@ -29,5 +28,3 @@ if ShopifyAPI::Base.respond_to?(:connection_class)
 else
   require 'active_resource/connection_ext'
 end
-
-ShopifyAPI::ApiVersion.define_known_versions
