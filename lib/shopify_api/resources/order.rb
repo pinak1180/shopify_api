@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module ShopifyAPI
   class Order < Base
     include Events
@@ -16,7 +17,7 @@ module ShopifyAPI
     end
 
     def transactions
-      Transaction.find(:all, :params => { :order_id => id })
+      Transaction.find(:all, params: { order_id: id })
     end
     
     def risks

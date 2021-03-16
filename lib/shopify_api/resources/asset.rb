@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module ShopifyAPI
   # Assets represent the files that comprise your theme.
   # There are different buckets which hold different kinds
@@ -9,10 +10,10 @@ module ShopifyAPI
   # or assets/bg-body.gif.
   #
   # Initialize with a key:
-  #   asset = ShopifyAPI::Asset.new(:key => 'assets/special.css', :theme_id => 12345)
+  #   asset = ShopifyAPI::Asset.new(key: 'assets/special.css', theme_id: 12345)
   #
   # Find by key:
-  #   asset = ShopifyAPI::Asset.find('assets/image.png', :params => {:theme_id => 12345})
+  #   asset = ShopifyAPI::Asset.find('assets/image.png', params: {theme_id: 12345})
   #
   # Get the text or binary value:
   #   asset.value # decodes from attachment attribute if necessary
@@ -38,13 +39,13 @@ module ShopifyAPI
 
     conditional_prefix :theme
 
-    def self.element_path(id, prefix_options = {}, query_options = nil) #:nodoc:
+    def self.element_path(_id, prefix_options = {}, query_options = nil) #:nodoc:
       prefix_options, query_options = split_options(prefix_options) if query_options.nil?
       "#{prefix(prefix_options)}#{collection_name}.#{format.extension}#{query_string(query_options)}"
     end
 
     # find an asset by key:
-    #   ShopifyAPI::Asset.find('layout/theme.liquid', :params => { theme_id: 99 })
+    #   ShopifyAPI::Asset.find('layout/theme.liquid', params: { theme_id: 99 })
     def self.find(*args)
       if args[0].is_a?(Symbol)
         super
@@ -75,7 +76,7 @@ module ShopifyAPI
     end
 
     def destroy
-      connection.delete(element_path(prefix_options.merge(:asset => {:key => key})), self.class.headers)
+      connection.delete(element_path(prefix_options.merge(asset: { key: key })), self.class.headers)
     end
 
     def new?

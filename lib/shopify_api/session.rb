@@ -1,26 +1,27 @@
+# frozen_string_literal: true
 require 'openssl'
 require 'rack'
 
 module ShopifyAPI
-
   class ValidationException < StandardError
   end
 
   class Session
+    SECONDS_IN_A_DAY = 24 * 60 * 60
+
     cattr_accessor :api_key, :secret, :myshopify_domain
     self.myshopify_domain = 'myshopify.com'
 
     attr_accessor :domain, :token, :name, :extra
-    attr_reader :api_version
+    attr_reader :api_version, :access_scopes
     alias_method :url, :domain
 
     class << self
-
       def setup(params)
-        params.each { |k,value| public_send("#{k}=", value) }
+        params.each { |k, value| public_send("#{k}=", value) }
       end
 
-      def temp(domain:, token:, api_version:, &block)
+      def temp(domain:, token:, api_version: ShopifyAPI::Base.api_version, &block)
         session = new(domain: domain, token: token, api_version: api_version)
 
         with_session(session, &block)
@@ -28,12 +29,17 @@ module ShopifyAPI
 
       def with_session(session, &_block)
         original_session = extract_current_session
+        original_user = ShopifyAPI::Base.user
+        original_password = ShopifyAPI::Base.password
 
         begin
+          ShopifyAPI::Base.clear_session
           ShopifyAPI::Base.activate_session(session)
           yield
         ensure
           ShopifyAPI::Base.activate_session(original_session)
+          ShopifyAPI::Base.user = original_user
+          ShopifyAPI::Base.password = original_password
         end
       end
 
@@ -51,7 +57,7 @@ module ShopifyAPI
         # extract host, removing any username, password or path
         shop = URI.parse("https://#{domain}").host
         # extract subdomain of .myshopify.com
-        if idx = shop.index(".")
+        if (idx = shop.index("."))
           shop = shop.slice(0, idx)
         end
         return nil if shop.empty?
@@ -62,9 +68,11 @@ module ShopifyAPI
 
       def validate_signature(params)
         params = (params.respond_to?(:to_unsafe_hash) ? params.to_unsafe_hash : params).with_indifferent_access
-        return false unless signature = params[:hmac]
+        return false unless (signature = params[:hmac])
 
-        calculated_signature = OpenSSL::HMAC.hexdigest(OpenSSL::Digest::SHA256.new(), secret, encoded_params_for_signature(params))
+        calculated_signature = OpenSSL::HMAC.hexdigest(
+          OpenSSL::Digest.new('SHA256'), secret, encoded_params_for_signature(params)
+        )
 
         Rack::Utils.secure_compare(calculated_signature, signature)
       end
@@ -73,7 +81,7 @@ module ShopifyAPI
 
       def encoded_params_for_signature(params)
         params = params.except(:signature, :hmac, :action, :controller)
-        params.map{|k,v| "#{URI.escape(k.to_s, '&=%')}=#{URI.escape(v.to_s, '&%')}"}.sort.join('&')
+        params.map { |k, v| "#{URI.escape(k.to_s, '&=%')}=#{URI.escape(v.to_s, '&%')}" }.sort.join('&')
       end
 
       def extract_current_session
@@ -84,15 +92,16 @@ module ShopifyAPI
       end
     end
 
-    def initialize(domain:, token:, api_version:, extra: {})
+    def initialize(domain:, token:, access_scopes: nil, api_version: ShopifyAPI::Base.api_version, extra: {})
       self.domain = self.class.prepare_domain(domain)
       self.api_version = api_version
       self.token = token
+      self.access_scopes = access_scopes
       self.extra = extra
     end
 
     def create_permission_url(scope, redirect_uri, options = {})
-      params = { client_id: api_key, scope: scope.join(','), redirect_uri: redirect_uri }
+      params = { client_id: api_key, scope: ShopifyAPI::ApiAccess.new(scope).to_s, redirect_uri: redirect_uri }
       params[:state] = options[:state] if options[:state]
       construct_oauth_url("authorize", params)
     end
@@ -100,7 +109,8 @@ module ShopifyAPI
     def request_token(params)
       return token if token
 
-      unless self.class.validate_signature(params) && params[:timestamp].to_i > 24.hours.ago.utc.to_i
+      twenty_four_hours_ago = Time.now.utc.to_i - SECONDS_IN_A_DAY
+      unless self.class.validate_signature(params) && params[:timestamp].to_i > twenty_four_hours_ago
         raise ShopifyAPI::ValidationException, "Invalid Signature: Possible malicious login"
       end
 
@@ -109,12 +119,12 @@ module ShopifyAPI
         self.extra = JSON.parse(response.body)
         self.token = extra.delete('access_token')
 
-        if expires_in = extra.delete('expires_in')
+        if (expires_in = extra.delete('expires_in'))
           extra['expires_at'] = Time.now.utc.to_i + expires_in
         end
         token
       else
-        raise RuntimeError, response.msg
+        raise response.msg
       end
     end
 
@@ -127,7 +137,11 @@ module ShopifyAPI
     end
 
     def api_version=(version)
-      @api_version = ApiVersion::NullVersion.matches?(version) ? ApiVersion::NullVersion : ApiVersion.find_version(version)
+      @api_version = if ApiVersion::NullVersion.matches?(version)
+        ApiVersion::NullVersion
+      else
+        ApiVersion.find_version(version)
+      end
     end
 
     def valid?
@@ -149,7 +163,28 @@ module ShopifyAPI
       expires_in <= 0
     end
 
+    def hash
+      state.hash
+    end
+
+    def ==(other)
+      self.class == other.class && state == other.state
+    end
+
+    alias_method :eql?, :==
+
+    protected
+
+    def state
+      [domain, token, api_version, extra]
+    end
+
     private
+
+    def access_scopes=(access_scopes)
+      return unless access_scopes
+      @access_scopes = ShopifyAPI::ApiAccess.new(access_scopes)
+    end
 
     def parameterize(params)
       URI.escape(params.collect { |k, v| "#{k}=#{v}" }.join('&'))

@@ -5,9 +5,10 @@ rdoc
 doc
 pkg
 .ruby-version
-*.lock
 *.gem
 .idea
 .dev/
 .bundle/
 vendor/
+_site/
+docs/.jekyll-cache/

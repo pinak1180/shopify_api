@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module ShopifyAPI
   # Shop object. Use Shop.current to receive
   # the shop.
@@ -9,7 +10,7 @@ module ShopifyAPI
     end
 
     def metafields(**options)
-      Metafield.find :all, params: options
+      Metafield.find(:all, params: options)
     end
 
     def add_metafield(metafield)

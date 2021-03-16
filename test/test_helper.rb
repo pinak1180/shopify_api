@@ -1,8 +1,9 @@
+# frozen_string_literal: true
 require 'rubygems'
 require 'minitest/autorun'
 require 'webmock/minitest'
 require_relative 'lib/webmock_extensions/last_request'
-require 'mocha/setup'
+require 'mocha/minitest'
 require 'pry'
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
@@ -23,7 +24,7 @@ module Test
         self.test("should_#{string}", &block)
       end
 
-      def self.context(string)
+      def self.context(_string)
         yield
       end
 
@@ -34,6 +35,7 @@ module Test
             const = mod.const_get(const)
             const.format = :json if const.respond_to?(:format=)
           rescue NameError
+            # Do nothing
           end
         end
 
@@ -68,7 +70,7 @@ module Test
 
       # Custom Assertions
       def assert_not(expression)
-        refute expression, "Expected <#{expression}> to be false!"
+        refute(expression, "Expected <#{expression}> to be false!")
       end
 
       def assert_nothing_raised
@@ -76,30 +78,30 @@ module Test
       end
 
       def assert_not_includes(array, value)
-        refute array.include?(value)
+        refute(array.include?(value))
       end
 
       def assert_includes(array, value)
-        assert array.include?(value)
+        assert(array.include?(value))
       end
 
-      def load_fixture(name, format=:json)
+      def load_fixture(name, format = :json)
         File.read(File.dirname(__FILE__) + "/fixtures/#{name}.#{format}")
       end
 
       def assert_request_body(expected)
-        assert_equal expected, WebMock.last_request.body
+        assert_equal(expected, WebMock.last_request.body)
       end
 
-      def fake(endpoint, options={})
-        request_body = options.has_key?(:request_body) ? options.delete(:request_body) : nil
-        body   = options.has_key?(:body) ? options.delete(:body) : load_fixture(endpoint)
+      def fake(endpoint, options = {})
+        request_body = options.key?(:request_body) ? options.delete(:request_body) : nil
+        body = options.key?(:body) ? options.delete(:body) : load_fixture(endpoint)
         format = options.delete(:format) || :json
         method = options.delete(:method) || :get
         api_version = options.delete(:api_version) || ShopifyAPI::ApiVersion.find_version('2019-01')
-        extension = ".#{options.delete(:extension)||'json'}" unless options[:extension]==false
+        extension = ".#{options.delete(:extension) || 'json'}" unless options[:extension] == false
         status = options.delete(:status) || 200
-        url = if options.has_key?(:url)
+        url = if options.key?(:url)
           options[:url]
         else
           "https://this-is-my-test-shop.myshopify.com#{api_version.construct_api_path("#{endpoint}#{extension}")}"

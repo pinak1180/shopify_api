@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'test_helper'
 require 'fulfillment_order_test_helper'
 
@@ -15,7 +16,7 @@ class AssignedFulFillmentOrderTest < Test::Unit::TestCase
       should "raise NotImplementedError when api_version is older than 2020-01" do
         url_prefix_for_activated_session_for('2019-10')
 
-        assert_raises NotImplementedError do
+        assert_raises(NotImplementedError) do
           ShopifyAPI::AssignedFulfillmentOrder.new(ActiveSupport::JSON.decode(@fulfillment_order_fixture))
         end
       end
@@ -31,7 +32,7 @@ class AssignedFulFillmentOrderTest < Test::Unit::TestCase
           body: @fulfillment_order_fixture,
           extension: false
 
-        assert_raises NotImplementedError do
+        assert_raises(NotImplementedError) do
           ShopifyAPI::AssignedFulfillmentOrder.all(params: { assigned_status: 'cancellation_requested' })
         end
       end
@@ -44,7 +45,7 @@ class AssignedFulFillmentOrderTest < Test::Unit::TestCase
           extension: false
 
         assigned_fulfillment_orders = ShopifyAPI::AssignedFulfillmentOrder.all(
-            params: { assigned_status: 'cancellation_requested' }
+          params: { assigned_status: 'cancellation_requested' }
         )
 
         assert_equal 2, assigned_fulfillment_orders.count
@@ -63,7 +64,7 @@ class AssignedFulFillmentOrderTest < Test::Unit::TestCase
           body: @fulfillment_order_fixture, extension: false
 
         assigned_fulfillment_orders = ShopifyAPI::AssignedFulfillmentOrder.all(
-            params: { location_ids: [assigned_location_id] }
+          params: { location_ids: [assigned_location_id] }
         )
 
         assert_equal 2, assigned_fulfillment_orders.count

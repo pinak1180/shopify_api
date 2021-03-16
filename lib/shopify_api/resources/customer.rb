@@ -1,9 +1,10 @@
+# frozen_string_literal: true
 module ShopifyAPI
   class Customer < Base
     include Metafields
 
     def orders
-      Order.find(:all, params: {customer_id: self.id})
+      Order.find(:all, params: { customer_id: self.id })
     end
 
     def self.search(params)

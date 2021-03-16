@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module ShopifyAPI
   class InvalidPaginationLinksError < StandardError; end
 
@@ -9,8 +10,6 @@ module ShopifyAPI
       links = parse_link_header(link_header)
       @previous_link = links.find { |link| link.rel == :previous }
       @next_link = links.find { |link| link.rel == :next }
-
-      self
     end
 
     private
@@ -20,12 +19,14 @@ module ShopifyAPI
       links = link_header.split(',')
       links.map do |link|
         parts = link.split('; ')
-        raise ShopifyAPI::InvalidPaginationLinksError.new("Invalid link header: url and rel expected") unless parts.length == 2
+        unless parts.length == 2
+          raise ShopifyAPI::InvalidPaginationLinksError, "Invalid link header: url and rel expected"
+        end
 
         url = parts[0][/<(.*)>/, 1]
         rel = parts[1][/rel="(.*)"/, 1]&.to_sym
 
-        url = URI.parse(url)
+        url = URI.parse(url).request_uri
         LinkHeader.new(url, rel)
       end
     end

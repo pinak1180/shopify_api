@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'test_helper'
 require "active_support/log_subscriber/test_helper"
 require 'json'
@@ -9,18 +10,21 @@ class LogSubscriberTest < Test::Unit::TestCase
 
   def setup
     super
-    @page = { :page => { :id => 1, :title => 'Shopify API' } }.to_json
-    @ua_header = "\"User-Agent\"=>\"ShopifyAPI/#{ShopifyAPI::VERSION} ActiveResource/#{ActiveResource::VERSION::STRING} Ruby/#{RUBY_VERSION}\""
+    @page = { page: { id: 1, title: 'Shopify API' } }.to_json
+    @ua_header = "\"User-Agent\"=>\"ShopifyAPI/#{ShopifyAPI::VERSION} " \
+      "ActiveResource/#{ActiveResource::VERSION::STRING} Ruby/#{RUBY_VERSION}\""
     @request_headers = "Headers: {\"Accept\"=>\"application/json\", " \
-      "#{@ua_header}, \"X-Shopify-Access-Token\"=>\"access_token\"}"
+      "#{@ua_header}, \"X-Shopify-Access-Token\"=>\"[FILTERED]\"}"
 
     ShopifyAPI::Base.clear_session
-    fake("apis",
+    fake(
+      "apis",
       url: "https://app.shopify.com/services/apis.json",
       method: :get,
       status: 200,
       api_version: :stub,
-      body: load_fixture('apis'))
+      body: load_fixture('apis')
+    )
     ShopifyAPI::ApiVersion.fetch_known_versions
     session = ShopifyAPI::Session.new(
       domain: "https://this-is-my-test-shop.myshopify.com",
@@ -30,8 +34,8 @@ class LogSubscriberTest < Test::Unit::TestCase
 
     ShopifyAPI::Base.activate_session(session)
 
-    ActiveResource::LogSubscriber.attach_to :active_resource
-    ActiveResource::DetailedLogSubscriber.attach_to :active_resource_detailed
+    ActiveResource::LogSubscriber.attach_to(:active_resource)
+    ActiveResource::DetailedLogSubscriber.attach_to(:active_resource_detailed)
   end
 
   def teardown
@@ -45,7 +49,7 @@ class LogSubscriberTest < Test::Unit::TestCase
   end
 
   test "logging on #find" do
-    fake "pages/1", :method => :get, :body => @page
+    fake("pages/1", method: :get, body: @page)
 
     ShopifyAPI::Page.find(1)
 
@@ -64,9 +68,9 @@ class LogSubscriberTest < Test::Unit::TestCase
   end
 
   test "logging on #find with an error" do
-    fake "pages/2", :method => :get, :body => nil, :status => 404
+    fake("pages/2", method: :get, body: nil, status: 404)
 
-    assert_raises ActiveResource::ResourceNotFound do
+    assert_raises(ActiveResource::ResourceNotFound) do
       ShopifyAPI::Page.find(2)
     end
 
@@ -103,7 +107,7 @@ class LogSubscriberTest < Test::Unit::TestCase
 
     ShopifyAPI::Page.find(1)
 
-    assert_equal 1, @logger.logged(:warn).size
+    assert_equal(1, @logger.logged(:warn).size)
 
     assert_match(
       %r{\[DEPRECATED\] ShopifyAPI made a call to GET /admin/api/2019-01/pages/1.json},
@@ -125,7 +129,7 @@ class LogSubscriberTest < Test::Unit::TestCase
 
     ShopifyAPI::Page.find(1)
 
-    assert_equal 1, @logger.logged(:warn).size
+    assert_equal(1, @logger.logged(:warn).size)
 
     assert_match(
       %r{\[API Version Warning\] ShopifyAPI made a call to GET /admin/api/2019-01/pages/1.json},

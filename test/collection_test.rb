@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'test_helper'
 
 class CollectionTest < Test::Unit::TestCase
@@ -6,23 +7,23 @@ class CollectionTest < Test::Unit::TestCase
     ShopifyAPI::Base.activate_session(available_version)
 
     fake(
-        'collections',
-        url: 'https://shop2.myshopify.com/admin/api/2020-01/collections/1.json',
-        method: :get,
-        status: 200,
-        body: load_fixture('collection'),
-        extension: false
+      'collections',
+      url: 'https://shop2.myshopify.com/admin/api/2020-01/collections/1.json',
+      method: :get,
+      status: 200,
+      body: load_fixture('collection'),
+      extension: false
     )
 
     collection = ShopifyAPI::Collection.find(1)
 
     fake(
-        'products',
-        url: 'https://shop2.myshopify.com/admin/api/2020-01/collections/1/products.json',
-        method: :get,
-        status: 200,
-        body: load_fixture('collection_products'),
-        extension: false
+      'products',
+      url: 'https://shop2.myshopify.com/admin/api/2020-01/collections/1/products.json',
+      method: :get,
+      status: 200,
+      body: load_fixture('collection_products'),
+      extension: false
     )
     assert_equal [632910392, 921728736], collection.products.map(&:id)
   end
@@ -32,17 +33,17 @@ class CollectionTest < Test::Unit::TestCase
     ShopifyAPI::Base.activate_session(old_version)
 
     fake(
-        'collections',
-        url: 'https://shop2.myshopify.com/admin/api/2019-10/collections/1.json',
-        method: :get,
-        status: 200,
-        body: load_fixture('collection'),
-        extension: false
+      'collections',
+      url: 'https://shop2.myshopify.com/admin/api/2019-10/collections/1.json',
+      method: :get,
+      status: 200,
+      body: load_fixture('collection'),
+      extension: false
     )
 
     collection = ShopifyAPI::Collection.find(1)
 
-    assert_raises NotImplementedError do
+    assert_raises(NotImplementedError) do
       collection.products
     end
   end

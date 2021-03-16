@@ -1,6 +1,6 @@
 Shopify API
 ===========
-[![Version][gem]][gem_url] [![Build Status](https://travis-ci.org/Shopify/shopify_api.svg?branch=master)](https://travis-ci.org/Shopify/shopify_api)
+[![Version][gem]][gem_url] [![Build Status](https://github.com/Shopify/shopify_api/workflows/CI/badge.svg?branch=master)](https://github.com/Shopify/shopify_api/actions)
 
 [gem]: https://img.shields.io/gem/v/shopify_api.svg
 [gem_url]: https://rubygems.org/gems/shopify_api
@@ -13,34 +13,36 @@ The REST API is implemented as JSON over HTTP using all four verbs (GET/POST/PUT
 
 - [Shopify API](#shopify-api)
 - [Usage](#usage)
-  * [Requirements](#requirements)
-    + [Ruby version](#ruby-version)
-  * [Installation](#installation)
-  * [Getting Started](#getting-started)
-    + [1) Create an app](#1-create-an-app)
-    + [2A) Private Apps](#2a-private-apps)
-    + [2B) Public and Custom Apps](#2b-public-and-custom-apps)
-    + [3) Requesting access from a shop](#3-requesting-access-from-a-shop)
-    + [4) Trading your `code` for an access token.](#4-trading-your--code--for-an-access-token)
-    + [5) Activating the session](#5-activating-the-session)
-    + [6A) Making requests to the GraphQL API](#6a-making-requests-to-the-graphql-api)
-    + [6B) Making requests to the REST API](#6b-making-requests-to-the-rest-api)
-  * [Console](#console)
-  * [Thread safety](#thread-safety)
-  * [Bulk Operations](#bulk-operations)
-    + [Example](#example)
+  - [Requirements](#requirements)
+    - [Ruby version](#ruby-version)
+  - [Installation](#installation)
+  - [Getting Started](#getting-started)
+    - [1) Create an app](#1-create-an-app)
+    - [2A) Private Apps](#2a-private-apps)
+    - [2B) Public and Custom Apps](#2b-public-and-custom-apps)
+    - [3) Requesting access from a shop](#3-requesting-access-from-a-shop)
+    - [4) Trading your `code` for an access token.](#4-trading-your-code-for-an-access-token)
+    - [5) Activating the session](#5-activating-the-session)
+    - [6A) Making requests to the GraphQL API](#6a-making-requests-to-the-graphql-api)
+          - [Note: the GraphQL client has improved and changed in version 9.0. See the client documentation for full usage details and a [migration guide](docs/graphql.md#migration-guide).](#note-the-graphql-client-has-improved-and-changed-in-version-90-see-the-client-documentation-for-full-usage-details-and-a-migration-guide)
+    - [6B) Making requests to the REST API](#6b-making-requests-to-the-rest-api)
+  - [Console](#console)
+  - [Thread safety](#thread-safety)
+  - [Bulk Operations](#bulk-operations)
+    - [Example](#example)
       - [1) Start the bulk operation](#1-start-the-bulk-operation)
-      - [2) Poll the status of the bulk operation](#2-poll-the-status-of-the-bulk-operation)
-      - [3) Retrieve your data](#3-retrieve-your-data)
-  * [Pagination](#pagination)
+      - [Step 2) Poll the status of the bulk operation](#step-2-poll-the-status-of-the-bulk-operation)
+      - [Step 3) Retrieve your data](#step-3-retrieve-your-data)
+  - [Pagination](#pagination)
 - [Breaking Change Notices](#breaking-change-notices)
-  * [Breaking change notice for version 8.0.0](#breaking-change-notice-for-version-800)
-  * [Breaking change notice for version 7.0.0](#breaking-change-notice-for-version-700)
-    + [Changes to ShopifyAPI::Session](#changes-to-shopifyapi--session)
-    + [Changes to how to define resources](#changes-to-how-to-define-resources)
-    + [URL construction](#url-construction)
-    + [URLs that have not changed](#urls-that-have-not-changed)
+  - [Breaking change notice for version 8.0.0](#breaking-change-notice-for-version-800)
+  - [Breaking change notice for version 7.0.0](#breaking-change-notice-for-version-700)
+    - [Changes to ShopifyAPI::Session](#changes-to-shopifyapisession)
+    - [Changes to how to define resources](#changes-to-how-to-define-resources)
+    - [URL construction](#url-construction)
+    - [URLs that have not changed](#urls-that-have-not-changed)
 - [Using Development Version](#using-development-version)
+- [Logging](#logging)
 - [Additional Resources](#additional-resources)
 - [Copyright](#copyright)
 
@@ -104,7 +106,7 @@ For a private App you just need to set the base site url as follows:
    ```ruby
    shop_url = "https://#{API_KEY}:#{PASSWORD}@#{SHOP_NAME}.myshopify.com"
    ShopifyAPI::Base.site = shop_url
-   ShopifyAPI::Base.api_version = '<version_name>' # find the latest stable api_version [here](https://shopify.dev/concepts/about-apis/versioning)
+   ShopifyAPI::Base.api_version = '<version_name>' # find the latest stable api_version here: https://shopify.dev/concepts/about-apis/versioning
    ```
 
    That's it; you're done! Next, skip to step 6 and start using the API!
@@ -127,7 +129,7 @@ Public and Custom apps need an access token from each shop to access that shop's
 
    ```ruby
    # We need to instantiate the session object before using it
-   shopify_session = ShopifyAPI::Session.new(domain: "SHOP_NAME.myshopify.com", api_version: api_version, token: nil)
+   shopify_session = ShopifyAPI::Session.new(domain: "#{SHOP_NAME}.myshopify.com", api_version: api_version, token: nil)
    
 # Then, create a permission URL with the session
    permission_url = shopify_session.create_permission_url(scope, "https://my_redirect_uri.com", { state: "My Nonce" })
@@ -202,7 +204,7 @@ Once authorized, the shop redirects the owner to the return URL of your applicat
 Once you have a token, simply pass in the `token` and `extra` hash (optional) when creating the session object:
 
    ```ruby
-   shopify_session = ShopifyAPI::Session.new(domain: "SHOP_NAME.myshopify.com", token: token, api_version: api_version, extra: extra)
+   shopify_session = ShopifyAPI::Session.new(domain: "#{SHOP_NAME}.myshopify.com", token: token, api_version: api_version, extra: extra)
    ```
 
 The session must be activated before use:
@@ -266,7 +268,7 @@ Responses to REST requests are returned as ActiveResource instances:
    Alternatively, you can use #temp to initialize a Session and execute a command which also handles temporarily setting ActiveResource::Base.site:
 
    ```ruby
-   products = ShopifyAPI::Session.temp(domain: "SHOP_NAME.myshopify.com", token: token, api_version: api_version) do
+   products = ShopifyAPI::Session.temp(domain: "#{SHOP_NAME}.myshopify.com", token: token, api_version: api_version) do
      ShopifyAPI::Product.find(:all)
    end
    ```
@@ -274,7 +276,7 @@ Responses to REST requests are returned as ActiveResource instances:
 If you would like to run a small number of calls against a different API version you can use this block syntax:
 
    ```ruby
-   ShopifyAPI::Session.temp(domain: "SHOP_NAME.myshopify.com", token: token, api_version: '2019-04') do
+   ShopifyAPI::Session.temp(domain: "#{SHOP_NAME}.myshopify.com", token: token, api_version: '2019-04') do
      ShopifyAPI::Product.find(:all)  # find call against version `2019-04`
 
      ShopifyAPI::Session.with_version(:unstable) do
@@ -625,6 +627,14 @@ or you can even use our automated rake task for docker:
 ```bash
 bundle exec rake docker
 ```
+
+# Logging 
+
+Enable ActiveResource's logger with 
+
+`export SHOPIFY_LOG_PATH={your_log_path}`
+
+This will log to a file at the given path, relative to the current project directory.
 
 # Additional Resources
 

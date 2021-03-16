@@ -1,3 +1,51 @@
+## Version 9.4.0
+
+* [#843](https://github.com/Shopify/shopify_api/pull/843) Introduce a new `access_scopes` attribute on the Session class.
+  * Specifying this in the Session constructor is optional. By default, this attribute returns `nil`.
+
+## Version 9.3.0
+
+* [#797](https://github.com/Shopify/shopify_api/pull/797) Release new Endpoint `fulfillment_order.open` and `fulfillment_order.reschedule`.
+
+* [#818](https://github.com/Shopify/shopify_api/pull/818) Avoid depending on ActiveSupport in Sesssion class.
+
+* Freeze all string literals. This should have no impact unless your application is modifying ('monkeypatching') the internals of the library in an unusual way.
+
+* [#802](https://github.com/Shopify/shopify_api/pull/802) Made `inventory_quantity` a read-only field in Variant
+
+* [#821](https://github.com/Shopify/shopify_api/pull/821) Add logging based on environment variable, move log subscriber out of `detailed_log_subscriber`.
+  The `ActiveResource::DetailedLogSubscriber` no longer automatically attaches when the class is loaded. If you were previously relying on that behaviour, you'll now need to call `ActiveResource::DetailedLogSubscriber.attach_to(:active_resource_detailed)`. (If using the new `SHOPIFY_LOG_PATH` environment setting then this is handled for you).
+
+* Provide `ApiAccess` value object to encapsulate scope operations [#829](https://github.com/Shopify/shopify_api/pull/829)
+
+## Version 9.2.0
+
+* Removes the `shopify` binary which will be used by the Shopify CLI
+
+## Version 9.1.1
+
+* Make cursor based pagination return relative uri's when fetching next and previous pages. [#726](https://github.com/Shopify/shopify_api/pull/726)
+
+## Version 9.1.0
+
+* Implements equality operator on `Session` [#714](https://github.com/Shopify/shopify_api/pull/714)
+
+## Version 9.0.4
+
+* Contains [#708](https://github.com/Shopify/shopify_api/pull/708) which is a revert for [#655](https://github.com/shopify/shopify_api/pull/655) due to the deprecated inventory parameters not being removed correctly in some cases
+
+## Version 9.0.3
+
+* We now raise a `ShopifyAPI::ValidationException` exception when clients try to use `Product` and `Variant` with deprecated inventory-related fields in API version `2019-10` or later. [#655](https://github.com/shopify/shopify_api/pull/655) Deprecation and migration information can be found in the following documents:
+  * [Product Variant REST API Reference](https://shopify.dev/docs/admin-api/rest/reference/products/product-variant)
+  * [Migrate your app to support multiple locations](https://shopify.dev/tutorials/migrate-your-app-to-support-multiple-locations)
+  * [Manage product inventory with the Admin API](https://shopify.dev/tutorials/manage-product-inventory-with-admin-api)
+* Added support for the Discount Code API batch endpoints [#701](https://github.com/shopify/shopify_api/pull/701)
+  * [Create](https://shopify.dev/docs/admin-api/rest/reference/discounts/discountcode#batch_create-2020-01)
+  * [Show](https://shopify.dev/docs/admin-api/rest/reference/discounts/discountcode#batch_show-2020-01)
+  * [List](https://shopify.dev/docs/admin-api/rest/reference/discounts/discountcode#batch_discount_codes_index-2020-01)
+* Fix issue in the README to explicitly say clients need to require the `shopify_api` gem [#700](https://github.com/Shopify/shopify_api/pull/700)
+
 ## Version 9.0.2
 
 * Added optional flag passed to `initialize_clients` to prevent from raising the `InvalidSchema` exception [#693](https://github.com/Shopify/shopify_api/pull/693)
